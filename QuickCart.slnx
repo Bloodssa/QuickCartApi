@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="QuickCartApi\QuickCartApi.csproj" />
+  <Project Path="QuickCartApi.Test\QuickCartApi.Test.csproj" />
+</Solution>
