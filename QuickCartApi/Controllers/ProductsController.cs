@@ -1,0 +1,87 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using QuickCartApi.DTOs.Product;
+using QuickCartApi.Services.Interfaces;
+
+// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
+namespace QuickCartApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductsController(IProductService productService) : ControllerBase
+    {
+        // GET: api/<ProductsController>
+        [HttpGet]
+        public async Task<ActionResult<ProductListResponse>> Get
+        (
+            [FromQuery] int? categoryId,
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20
+        )
+        {
+            return Ok(await productService.GetAllAsync(categoryId, search, page, pageSize));
+        }
+
+        // GET api/<ProductsController>/5
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<ProductResponse>> GetById(int id)
+        {
+            var product = await productService.GetByIdAsync(id);
+            return product is null ? NotFound(new { message = "Product not found."}) : Ok(product);
+        }
+
+        // POST api/<ProductsController>
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ProductResponse>> Create([FromForm] CreateProductRequest request)
+        {
+            var (product, error) = await productService.CreateAsync(request);
+            if (error is not null) return BadRequest(new { message = error});
+
+            return CreatedAtAction(nameof(GetById), new { id = product!.Id }, product);
+        }
+
+        // TODO: IF UI HAVE SAME FORM AS IMAGE OF THE PRODUCT MAKE IT MULTIPART
+        // PUT api/<ProductsController>/5
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<ProductResponse>> Put(int id, [FromBody] UpdateProductRequest request)
+        {
+            var (success, error, response) = await productService.UpdateAsync(id, request);
+
+            if (!success)
+                return error == "Product not found." ?
+                    NotFound(new { message = error }) : BadRequest(new { message = error });
+
+            return Ok(response);
+        }
+
+        // DELETE api/<ProductsController>/5
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var (success, error) = await productService.DeleteAsync(id);
+            return success ? NoContent() : NotFound(new { message = error } );
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id:int}/images/{imageId:int}")]
+        public async Task<IActionResult> DeleteImage(int id, int imageId)
+        {
+            var (success, error) = await productService.DeleteImageAsync(id, imageId);
+            return success ? NoContent() : NotFound(new { message = error });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id:int}/images/{imageId:int}/default")]
+        public async Task<IActionResult> SetDefaultImage(int id, int imageId)
+        {
+            var (success, error) = await productService.SetDefaultImageAsync(id, imageId);
+            return success ? NoContent() : NotFound(new { message = error });
+        }
+    }
+}

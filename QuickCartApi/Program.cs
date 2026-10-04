@@ -3,12 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QuickCartApi.Data;
 using QuickCartApi.Options;
-using QuickCartApi.Repositories;
-using QuickCartApi.Repositories.Interfaces;
-using QuickCartApi.Services;
-using QuickCartApi.Services.Interfaces;
 using Scalar.AspNetCore;
 using System.Text;
+using QuickCartApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,15 +63,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
-
-#region DI CONTAINER
-
-    builder.Services.AddScoped<IAuthService, AuthService>();
-    builder.Services.AddScoped<IUserRepository, UserRepository>();
-    builder.Services.AddScoped<ITokenService, TokenService>();
-    builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-
-#endregion
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
