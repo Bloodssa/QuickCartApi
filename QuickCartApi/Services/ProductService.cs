@@ -8,7 +8,8 @@ namespace QuickCartApi.Services
     public class ProductService(
             IProductRepository productRepository,
             IProductImageRepository productImageRepository,
-            IFileStorageService storage
+            IFileStorageService storage,
+            IHttpContextAccessor httpContextAccessor
         ) : IProductService
     {
 
@@ -146,9 +147,19 @@ namespace QuickCartApi.Services
             Images = product.Images?.Select(i => new ProductImageResponse
             {
                 Id = i.Id,
-                ImageUrl = i.ImageUrl,
+                ImageUrl = GetFullImageUrl(i.ImageUrl),
                 IsDefault = i.IsDefault
             }).ToList() ?? []
         };
+
+        private string GetFullImageUrl(string url)
+        {
+            var request = httpContextAccessor.HttpContext?.Request;
+
+            if (request is null)
+                return url;
+
+            return $"{request.Scheme}://{request.Host}{url}";
+        }
     }
 }

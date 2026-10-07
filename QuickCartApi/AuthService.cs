@@ -8,7 +8,7 @@ using QuickCartApi.Options;
 using QuickCartApi.Repositories.Interfaces;
 using QuickCartApi.Services.Interfaces;
 
-namespace QuickCartApi.Services
+namespace QuickCartApi
 {
     public class AuthService(
             IUserRepository userRepository,
