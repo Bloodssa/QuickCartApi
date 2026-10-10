@@ -10,11 +10,14 @@ namespace QuickCartApi.Extensions
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             // Repositories
+            services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IProductImageRepository, ProductImageRepository>();
+            services.AddScoped<ICartItemRepository, CartItemRepository>();
+            services.AddScoped<IAddressRepository, AddressRepository>();
 
             // Services
             services.AddScoped<IAuthService, AuthService>();
@@ -22,6 +25,9 @@ namespace QuickCartApi.Extensions
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IFileStorageService, FileStorageService>();
+            services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IAddressRepository, AddressRepository>();
+            services.AddScoped<IAddressService, AddressService>();
             return services;
         }
     }

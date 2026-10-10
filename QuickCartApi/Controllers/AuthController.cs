@@ -6,7 +6,6 @@ using QuickCartApi.Entities;
 using QuickCartApi.Services.Interfaces;
 using System.Security.Claims;
 
-
 namespace QuickCartApi.Controllers
 {
     [Route("api/[controller]")]

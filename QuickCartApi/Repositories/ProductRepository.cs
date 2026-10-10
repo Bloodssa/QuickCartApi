@@ -5,7 +5,7 @@ using QuickCartApi.Repositories.Interfaces;
 
 namespace QuickCartApi.Repositories
 {
-    public class ProductRepository(AppDbContext context) : IProductRepository
+    public class ProductRepository(AppDbContext context) : BaseRepository<Product>(context), IProductRepository
     {
         public async Task<(List<Product> Items, int TotalCount)> GetAllAsync(int? categoryId, string? search, int page, int pageSize)
         {
@@ -30,33 +30,11 @@ namespace QuickCartApi.Repositories
 
             return (items, totalCount);
         }
-        public async Task<Product?> GetByIdAsync(int id)
+        public override async Task<Product?> GetByIdAsync(int id)
             => await context.Products
                    .Include(p => p.Category)
                    .Include(p => p.Images)
                    .FirstOrDefaultAsync(p => p.Id == id);
-
-        public async Task<Product> AddAsync(Product product)
-        {
-            await context.Products.AddAsync(product);
-            await context.SaveChangesAsync();
-
-            return product;
-        }
-
-        public async Task DeleteAsync(Product product)
-        {
-            context.Products.Remove(product);
-            await context.SaveChangesAsync();
-        }
-
-        public async Task<Product> UpdateAsync(Product product)
-        {
-            context.Products.Update(product);
-            await context.SaveChangesAsync();
-
-            return product;
-        }
 
         public async Task<bool> CategoryExistsAsync(int categoryId) =>
             await context.Categories.AnyAsync(c => c.Id == categoryId);

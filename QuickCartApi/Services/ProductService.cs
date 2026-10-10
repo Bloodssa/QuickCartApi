@@ -86,8 +86,10 @@ namespace QuickCartApi.Services
             product.StockQuantity = request.StockQuantity;
             product.CategoryId = request.CategoryId;
 
-            var updated = await productRepository.UpdateAsync(product);
-            return (true, null, ToResponse(updated));
+            await productRepository.UpdateAsync(product);
+            var updated = await productRepository.GetByIdAsync(id);
+
+            return (true, null, ToResponse(updated!));
         }
 
         public async Task<(bool Success, string? Error)> DeleteAsync(int id)
