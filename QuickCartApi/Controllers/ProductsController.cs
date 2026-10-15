@@ -15,13 +15,10 @@ namespace QuickCartApi.Controllers
         [HttpGet]
         public async Task<ActionResult<ProductListResponse>> Get
         (
-            [FromQuery] int? categoryId,
-            [FromQuery] string? search,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20
+            [FromQuery] ProductQuery q
         )
         {
-            return Ok(await productService.GetAllAsync(categoryId, search, page, pageSize));
+            return Ok(await productService.GetAllAsync(q));
         }
 
         // GET api/<ProductsController>/5

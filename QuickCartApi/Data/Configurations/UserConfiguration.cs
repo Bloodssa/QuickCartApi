@@ -23,6 +23,8 @@ namespace QuickCartApi.Data.Configurations
                 .HasMaxLength(255)
                 .IsRequired();
 
+            builder.HasIndex(u => u.Email).IsUnique();
+
             builder.Property(u => u.Phone)
                 .HasMaxLength(20);
 

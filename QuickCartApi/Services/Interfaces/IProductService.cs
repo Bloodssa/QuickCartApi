@@ -4,7 +4,7 @@ namespace QuickCartApi.Services.Interfaces
 {
     public interface IProductService
     {
-        Task<ProductListResponse> GetAllAsync(int? categoryId, string? search, int page, int pageSize);
+        Task<ProductListResponse> GetAllAsync(ProductQuery q);
         Task<ProductResponse?> GetByIdAsync(int id);
         Task<(ProductResponse? Product, string? error)> CreateAsync(CreateProductRequest request);
         Task<(bool Success, string? Error, ProductResponse? response)> UpdateAsync(int id, UpdateProductRequest request);

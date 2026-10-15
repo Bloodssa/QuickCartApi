@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using QuickCartApi.Common;
 using QuickCartApi.DTOs.Auth;
 using QuickCartApi.DTOs.Users;
-using QuickCartApi.Enums;
 using QuickCartApi.Entities;
+using QuickCartApi.Enums;
 using QuickCartApi.Options;
 using QuickCartApi.Repositories.Interfaces;
 using QuickCartApi.Services.Interfaces;
@@ -20,19 +23,25 @@ namespace QuickCartApi.Services
     {
         private const string REFRESH_COOKIE_NAME = "refresh_token";
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+        private static readonly TimeSpan ReuseGracePeriod = TimeSpan.FromSeconds(30);
 
-        public async Task<UserResponse?> RegisterAsync(RegisterRequest request)
+        public async Task<ServiceResult<UserResponse>> RegisterAsync(RegisterRequest request)
         {
-            // check if the username already exists in the db
-            if (await userRepository.FindUserNameExistAsync(request.Username))
-                return null;
+            var username = request.Username.Trim();
+            var email = request.Email.Trim();
+
+            if (await userRepository.FindUserNameExistAsync(username))
+                return Result.Fail<UserResponse>(ErrorKind.Conflict, "Username already exists.");
+
+            if (await userRepository.FindEmailExistAsync(email))
+                return Result.Fail<UserResponse>(ErrorKind.Conflict, "Email already exists.");
 
             User user = new()
             {
-                Username = request.Username,
+                Username = username,
                 Role = UserRole.Customer.ToString(),
                 FullName = request.FullName,
-                Email = request.Email,
+                Email = email,
                 Phone = request.Phone,
                 CreatedAt = DateTime.UtcNow
             };
@@ -40,9 +49,19 @@ namespace QuickCartApi.Services
             user.PasswordHash = new PasswordHasher<User>()
                 .HashPassword(user, request.Password);
 
-            var created = await userRepository.AddUserAsync(user);
+            User created;
 
-            return new UserResponse
+            try
+            {
+                created = await userRepository.AddUserAsync(user);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+            {   
+                // unique index violated: someone registered the same username or email a moment ago
+                return Result.Fail<UserResponse>(ErrorKind.Conflict, "Username or email already exists.");
+            }
+
+            var response = new UserResponse
             {
                 Id = created.Id,
                 Username = created.Username,
@@ -51,7 +70,9 @@ namespace QuickCartApi.Services
                 Email = created.Email,
                 Phone = created.Phone,
                 CreatedAt = created.CreatedAt
-            }; 
+            };
+
+            return Result.Ok(response);
         }
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request, HttpResponse response)
@@ -79,11 +100,14 @@ namespace QuickCartApi.Services
             var existingToken = await refreshTokenRepository.FindByHashAsync(tokenHash);
 
             if (existingToken is null)
+            {
+                DeleteRefreshCookie(response);   // unknown token: stop the browser from sending it again
                 return null;
+            }
 
             // reuse detection a revoked token being used again means it is stollen
             // revoke all the session of that user
-            if (existingToken.RevokedAtUtc is not null)
+            if (existingToken.RevokedAtUtc is not null && DateTime.UtcNow - existingToken.RevokedAtUtc.Value > ReuseGracePeriod)
             {
                 await refreshTokenRepository.RevokeAllForUserAsync(existingToken.UserId);
                 DeleteRefreshCookie(response);
@@ -91,9 +115,14 @@ namespace QuickCartApi.Services
             }
 
             if (existingToken.ExpiresAtUtc <= DateTime.UtcNow)
+            {
+                DeleteRefreshCookie(response);   // expired: clear the dead cookie
                 return null;
+            }
 
-            await refreshTokenRepository.RevokeAsync(existingToken);
+            // inside the grace period the token is already revoked, so don't revoke it twice
+            if (existingToken.RevokedAtUtc is null)
+                await refreshTokenRepository.RevokeAsync(existingToken);
 
             var user = existingToken.User ?? await userRepository.FindUserByIdAsync(existingToken.UserId);
             if (user is null)
@@ -158,24 +187,29 @@ namespace QuickCartApi.Services
             };
         }
 
-        private void SetRefreshCookie(HttpResponse response, string token, DateTime expiresAtUtc)
+        private CookieOptions RefreshCookieOptions(DateTimeOffset? expires = null)
         {
-            response.Cookies.Append(REFRESH_COOKIE_NAME, token, new CookieOptions
+            var options = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = !environment.IsDevelopment(),
-                SameSite = SameSiteMode.Strict,
-                Expires = expiresAtUtc,
-                Path = "/api/auth"
-            });
+                Secure = true,
+                SameSite = SameSiteMode.None,   // frontend and API are on different sites in prod
+                Path = "/api/auth",
+                Expires = expires
+            };
+
+            // lets the cookie survive third-party cookie blocking by keying it to the frontend's site.
+            // production only, so local development keeps behaving exactly as it does now.
+            if (!environment.IsDevelopment())
+                options.Extensions.Add("Partitioned");
+
+            return options;
         }
 
+        private void SetRefreshCookie(HttpResponse response, string token, DateTime expiresAtUtc)
+            => response.Cookies.Append(REFRESH_COOKIE_NAME, token, RefreshCookieOptions(expiresAtUtc));
+
         private void DeleteRefreshCookie(HttpResponse response)
-        {
-            response.Cookies.Delete(REFRESH_COOKIE_NAME, new CookieOptions
-            {
-                Path = "/api/auth"
-            });
-        }
+            => response.Cookies.Append(REFRESH_COOKIE_NAME, string.Empty, RefreshCookieOptions(DateTimeOffset.UnixEpoch));
     }
 }

@@ -1,10 +1,11 @@
-﻿using QuickCartApi.Entities;
+﻿using QuickCartApi.DTOs.Product;
+using QuickCartApi.Entities;
 
 namespace QuickCartApi.Repositories.Interfaces
 {
     public interface IProductRepository : IBaseRepository<Product>
     {
-        Task<(List<Product> Items, int TotalCount)> GetAllAsync(int? categoryId, string? search, int page, int pageSize);
+        Task<(List<Product> Items, int TotalCount)> GetAllAsync(ProductQuery pq);
         Task<bool> CategoryExistsAsync(int categoryId);
     }
 }

@@ -13,18 +13,18 @@ namespace QuickCartApi.Services
         ) : IProductService
     {
 
-        public async Task<ProductListResponse> GetAllAsync(int? categoryId, string? search, int page, int pageSize)
+        public async Task<ProductListResponse> GetAllAsync(ProductQuery q)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
+            q.Page = q.Page < 1 ? 1 : q.Page;
+            q.PageSize = q.PageSize is < 1 or > 100 ? 20 : q.PageSize;
 
-            var (items, totalCount) = await productRepository.GetAllAsync(categoryId, search, page, pageSize);
+            var (items, totalCount) = await productRepository.GetAllAsync(q);
 
             return new ProductListResponse
             {
                 Products = items.Select(ToResponse).ToList(),
-                Page = page,
-                PageSize = pageSize,
+                Page = q.Page,
+                PageSize = q.PageSize,
                 TotalResults = totalCount
             };
         }

@@ -1,10 +1,8 @@
-﻿using Azure.Core;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using QuickCartApi.Common;
 using QuickCartApi.DTOs.Address;
-using QuickCartApi.Entities;
 using QuickCartApi.Services.Interfaces;
 using System.Security.Claims;
 
@@ -43,6 +41,7 @@ namespace QuickCartApi.Controllers
             return Ok(address);
         }
 
+        [HttpPost]
         public async Task<ActionResult<AddressResponse>> Create([FromBody] AddressRequest request)
         {
             var userId = GetUserId();

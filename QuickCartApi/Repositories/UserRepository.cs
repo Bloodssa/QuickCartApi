@@ -15,6 +15,9 @@ namespace QuickCartApi.Repositories
             return user;
         }
 
+        public async Task<bool> FindEmailExistAsync(string email) =>
+            await context.Users.AnyAsync(u => u.Email == email);
+
         public async Task<User?> FindUserAsync(string username)
         {
             return await context.Users.FirstOrDefaultAsync(u => u.Username == username);

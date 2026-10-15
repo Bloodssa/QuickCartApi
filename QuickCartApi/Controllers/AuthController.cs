@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using QuickCartApi.Common;
 using QuickCartApi.DTOs.Auth;
-using QuickCartApi.Entities;
+using QuickCartApi.DTOs.Users;
 using QuickCartApi.Services.Interfaces;
 using System.Security.Claims;
 
@@ -13,23 +14,23 @@ namespace QuickCartApi.Controllers
     public class AuthController(IAuthService authService) : ControllerBase
     {
         [HttpPost("register")]
-        public async Task<ActionResult<User>> Register(RegisterRequest request)
+        public async Task<ActionResult<UserResponse>> Register([FromBody] RegisterRequest request)
         {
-            var user = await authService.RegisterAsync(request);
+            var result = await authService.RegisterAsync(request);
 
-            if (user is null)
-                return Conflict(new { message = "Username already exists." });
+            if (!result.Success)
+                return result.ToProblem();
 
-            return CreatedAtAction(nameof(Register), user);
+            return Ok(result.Value);
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
+        public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)
         {
             var result = await authService.LoginAsync(request, Response);
 
             if (result is null)
-                return Unauthorized(new { message = "Invalid Credentials." });
+                return Unauthorized(new { message = "Invalid username or password" });
 
             return Ok(result);
         }

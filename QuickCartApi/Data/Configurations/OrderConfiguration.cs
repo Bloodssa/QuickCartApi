@@ -25,6 +25,8 @@ namespace QuickCartApi.Data.Configurations
                 .WithMany()
                 .HasForeignKey(o => o.AddressId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(o => o.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace QuickCartApi.Entities
+﻿using QuickCartApi.Enums;
+
+namespace QuickCartApi.Entities
 {
     public class Order : BaseEntity
     {
@@ -7,7 +9,7 @@
         public int OrderNumber { get; set; }
         public decimal SubTotal { get; set; }
         public decimal Total { get; set; }
-        public string Status { get; set; } = string.Empty;
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public DateTime OrderDate { get; set; }
         public User User { get; set; } = null!;
         public Address Address { get; set; } = null!;
