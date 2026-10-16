@@ -9,6 +9,7 @@
         public int StockQuantity { get; set; }
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
+        public bool IsFeatured { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<ProductImageResponse> Images { get; set; } = [];
     }

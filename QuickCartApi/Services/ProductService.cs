@@ -46,27 +46,13 @@ namespace QuickCartApi.Services
                 Description = request.Description,
                 Price = request.Price,
                 StockQuantity = request.StockQuantity,
+                IsFeatured = request.IsFeatured,
                 CategoryId = request.CategoryId,
                 CreatedAt = DateTime.UtcNow
             };
 
             var created = await productRepository.AddAsync(product);
-
-            if (request.Images is { Count: > 0})
-            {
-                for (var i = 0; i < request.Images.Count; i++)
-                {
-                    var (success, fileName, _) = await storage.SaveImageAsync(request.Images[i]);
-                    if (!success) continue;
-
-                    await productImageRepository.AddAsync(new ProductImage
-                    {
-                        ProductId = created.Id,
-                        ImageUrl = $"/uploads/products/{fileName}",
-                        IsDefault = i == 0 // first image is the default image
-                    });
-                }
-            }
+            await SaveImagesAsync(created.Id, request.Images, makeFirstDefault: true);
 
             var withImages = await productRepository.GetByIdAsync(created.Id);
             return (ToResponse(withImages!), null);
@@ -84,9 +70,11 @@ namespace QuickCartApi.Services
             product.Description = request.Description;
             product.Price = request.Price;
             product.StockQuantity = request.StockQuantity;
+            product.IsFeatured = request.IsFeatured;
             product.CategoryId = request.CategoryId;
 
             await productRepository.UpdateAsync(product);
+            await SaveImagesAsync(id, request.Images, makeFirstDefault: !product.Images.Any(i => i.IsDefault));
             var updated = await productRepository.GetByIdAsync(id);
 
             return (true, null, ToResponse(updated!));
@@ -143,6 +131,7 @@ namespace QuickCartApi.Services
             Description = product.Description,
             Price = product.Price,
             StockQuantity = product.StockQuantity,
+            IsFeatured = product.IsFeatured,
             CategoryId = product.CategoryId,
             CategoryName = product.Category?.Name ?? string.Empty,
             CreatedAt = product.CreatedAt,
@@ -153,6 +142,26 @@ namespace QuickCartApi.Services
                 IsDefault = i.IsDefault
             }).ToList() ?? []
         };
+
+        private async Task SaveImagesAsync(int productId, IEnumerable<IFormFile>? files, bool makeFirstDefault)
+        {
+            if (files is null) return;
+
+            var isFirst = true;
+            foreach (var file in files)
+            {
+                var (success, fileName, _) = await storage.SaveImageAsync(file);
+                if (!success) continue;
+
+                await productImageRepository.AddAsync(new ProductImage
+                {
+                    ProductId = productId,
+                    ImageUrl = $"/uploads/products/{fileName}",
+                    IsDefault = makeFirstDefault && isFirst
+                });
+                isFirst = false;
+            }
+        }
 
         private string GetFullImageUrl(string url)
         {

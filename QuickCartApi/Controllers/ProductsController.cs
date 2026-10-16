@@ -41,11 +41,11 @@ namespace QuickCartApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = product!.Id }, product);
         }
 
-        // TODO: IF UI HAVE SAME FORM AS IMAGE OF THE PRODUCT MAKE IT MULTIPART
         // PUT api/<ProductsController>/5
         [Authorize(Roles = "Admin")]
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<ProductResponse>> Put(int id, [FromBody] UpdateProductRequest request)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ProductResponse>> Put(int id, [FromForm] UpdateProductRequest request)
         {
             var (success, error, response) = await productService.UpdateAsync(id, request);
 

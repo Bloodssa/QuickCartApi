@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using QuickCartApi.Validators;
+using System.ComponentModel.DataAnnotations;
 
 namespace QuickCartApi.DTOs.Product
 {
@@ -16,15 +17,15 @@ namespace QuickCartApi.DTOs.Product
         public decimal Price { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue)]
-        // TODO: MAKE A CORRECT ERROR MESSAGE
+        [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative.")]
         public int StockQuantity { get; set; }
+
+        public bool IsFeatured { get; set; }
 
         [Required]
         public int CategoryId { get; set; }
 
-        // TODO: ADD A VALIDATION 1 IMAGE MUST BE UPLOAD FOR CREATE PROD
-        // [MinImages()]
+        [MinImages(1, ErrorMessage = "Upload at least one product image.")]
         public List<IFormFile>? Images { get; set; }
     }
 }
