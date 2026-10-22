@@ -1,16 +1,21 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using QuickCartApi.Common;
 using QuickCartApi.DTOs.Cart;
+using QuickCartApi.Extensions;
 using QuickCartApi.Services.Interfaces;
 using System.Security.Claims;
 
 namespace QuickCartApi.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion(1)]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize]
+    [EnableRateLimiting(RateLimitingExtension.ReadPolicy)] // deafault ratelimit for read
     public class CartController(ICartService cartService) : ControllerBase
     {
         [HttpGet]
@@ -23,7 +28,8 @@ namespace QuickCartApi.Controllers
             return Ok(await cartService.GetCartAsync(userId.Value)); 
         }
 
-        [HttpPost]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
+        [HttpPost("items")]
         public async Task<ActionResult<CartResponse>> AddToCart([FromBody] AddToCartRequest request)
         {
             var userId = GetUserId();
@@ -38,7 +44,8 @@ namespace QuickCartApi.Controllers
             return Ok(result.Value);
         }
 
-        [HttpPatch("{id:int}")]
+        [EnableRateLimiting(RateLimitingExtension.ReadPolicy)]
+        [HttpPatch("items/{id:int}")]
         public async Task<ActionResult<CartResponse>> UpdateCartItemQuantity([FromBody] UpdateCartItemRequest request, [FromRoute] int id)
         {
             var userId = GetUserId();
@@ -54,7 +61,8 @@ namespace QuickCartApi.Controllers
             return Ok(result.Value);
         }
 
-        [HttpDelete("{id:int}")]
+        [EnableRateLimiting(RateLimitingExtension.ReadPolicy)]
+        [HttpDelete("items/{id:int}")]
         public async Task<ActionResult> RemoveCartItem([FromRoute] int id)
         {
             var userId = GetUserId();
@@ -68,7 +76,8 @@ namespace QuickCartApi.Controllers
             return NoContent();
         }
 
-        [HttpDelete]
+        [EnableRateLimiting(RateLimitingExtension.ReadPolicy)]
+        [HttpDelete("items")]
         public async Task<IActionResult> ClearCart()
         {
             var userId = GetUserId();

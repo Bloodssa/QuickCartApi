@@ -28,7 +28,8 @@ builder.Services.AddCors(options =>
                 "https://quick-cart.wmsys.online"
             ).AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("Retry-After");
     });
 });
 
@@ -77,15 +78,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
+
 builder.Services.AddApplicationServices();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddApiVersioningSetup();
+builder.Services.AddRateLimitingSetup();
+builder.Services.AddOpenApi("v1");
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-
 app.MapOpenApi();
-app.MapScalarApiReference();
+app.MapScalarApiReference(options =>
+{
+    options.AddDocument("v1", "QuickCart API v1", "/openapi/v1.json");
+});
 
 
 app.UseHttpsRedirection();
@@ -93,7 +100,8 @@ app.UseStaticFiles();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
-    
+app.UseRateLimiter();
+
 app.MapControllers();
 
 app.Run();

@@ -1,16 +1,21 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using QuickCartApi.Common;
 using QuickCartApi.DTOs.Address;
 using QuickCartApi.Services.Interfaces;
 using System.Security.Claims;
+using QuickCartApi.Extensions;
 
 namespace QuickCartApi.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion(1)]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize]
+    [EnableRateLimiting(RateLimitingExtension.ReadPolicy)]
     public class AddressController(IAddressService addressService) : ControllerBase
     {
         [HttpGet]
@@ -41,6 +46,7 @@ namespace QuickCartApi.Controllers
             return Ok(address);
         }
 
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         [HttpPost]
         public async Task<ActionResult<AddressResponse>> Create([FromBody] AddressRequest request)
         {
@@ -57,6 +63,7 @@ namespace QuickCartApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result.Value!.Id}, result.Value);
         }
 
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         [HttpPut("{id:int}")]
         public async Task<ActionResult<AddressResponse>> Update([FromRoute] int id, [FromBody] AddressRequest request)
         {
@@ -73,6 +80,7 @@ namespace QuickCartApi.Controllers
             return Ok(result.Value);
         }
 
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         [HttpPatch("{id:int}/default")]
         public async Task<IActionResult> SetDefault([FromRoute] int id)
         {
@@ -89,6 +97,7 @@ namespace QuickCartApi.Controllers
             return NoContent();
         }
 
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {

@@ -1,14 +1,19 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using QuickCartApi.DTOs.Product;
+using QuickCartApi.Extensions;
 using QuickCartApi.Services.Interfaces;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace QuickCartApi.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion(1)]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [EnableRateLimiting(RateLimitingExtension.ReadPolicy)]
     public class ProductsController(IProductService productService) : ControllerBase
     {
         // GET: api/<ProductsController>
@@ -33,6 +38,7 @@ namespace QuickCartApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [Consumes("multipart/form-data")]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         public async Task<ActionResult<ProductResponse>> Create([FromForm] CreateProductRequest request)
         {
             var (product, error) = await productService.CreateAsync(request);
@@ -45,6 +51,7 @@ namespace QuickCartApi.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPut("{id:int}")]
         [Consumes("multipart/form-data")]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         public async Task<ActionResult<ProductResponse>> Put(int id, [FromForm] UpdateProductRequest request)
         {
             var (success, error, response) = await productService.UpdateAsync(id, request);
@@ -59,6 +66,7 @@ namespace QuickCartApi.Controllers
         // DELETE api/<ProductsController>/5
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id:int}")]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         public async Task<IActionResult> Delete(int id)
         {
             var (success, error) = await productService.DeleteAsync(id);
@@ -67,6 +75,7 @@ namespace QuickCartApi.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id:int}/images/{imageId:int}")]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         public async Task<IActionResult> DeleteImage(int id, int imageId)
         {
             var (success, error) = await productService.DeleteImageAsync(id, imageId);
@@ -75,6 +84,7 @@ namespace QuickCartApi.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id:int}/images/{imageId:int}/default")]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         public async Task<IActionResult> SetDefaultImage(int id, int imageId)
         {
             var (success, error) = await productService.SetDefaultImageAsync(id, imageId);

@@ -1,14 +1,19 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using QuickCartApi.DTOs.Category;
+using QuickCartApi.Extensions;
 using QuickCartApi.Services.Interfaces;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace QuickCartApi.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion(1)]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [EnableRateLimiting(RateLimitingExtension.ReadPolicy)]
     public class CategoriesController(ICategoryService categoryService) : ControllerBase
     {
         // GET: api/<CategoryController>
@@ -25,6 +30,7 @@ namespace QuickCartApi.Controllers
         }
 
         // POST api/<CategoryController>
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CreateCategoryRequest request)
@@ -37,6 +43,7 @@ namespace QuickCartApi.Controllers
         // PUT api/<CategoryController>/5
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         public async Task<IActionResult> Put(int id, [FromBody] UpdateCategoryRequest request)
         {
             var updated = await categoryService.UpdateAsync(id, request);
@@ -49,6 +56,7 @@ namespace QuickCartApi.Controllers
         // DELETE api/<CategoryController>/5
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
         public async Task<IActionResult> Delete(int id)
         {
             var (success, error) = await categoryService.DeleteAsync(id);

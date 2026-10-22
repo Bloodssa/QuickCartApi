@@ -14,6 +14,10 @@ namespace QuickCartApi.DTOs.Auth
         public string Password { get; set; } = string.Empty;
 
         [Required]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Required]
         [MaxLength(150)]
         public string FullName { get; set; } = string.Empty;
 

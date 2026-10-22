@@ -194,7 +194,7 @@ namespace QuickCartApi.Services
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,   // frontend and API are on different sites in prod
-                Path = "/api/auth",
+                Path = "/api/v1/auth",
                 Expires = expires
             };
 

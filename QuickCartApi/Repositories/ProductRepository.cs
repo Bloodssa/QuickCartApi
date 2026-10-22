@@ -66,7 +66,7 @@ namespace QuickCartApi.Repositories
                     .OrderByDescending(p => p.OrderItems
                     .Where(oi => oi.Order.Status != OrderStatus.Cancelled && oi.Order.OrderDate >= since)
                     .Sum(oi => oi.Quantity))
-                    .ThenByDescending(p => p.CreatedAt)
+                    .ThenByDescending(p => p.CreatedAt) 
                     .ThenByDescending(p => p.Id),
 
                 _ => query                                   // Newest

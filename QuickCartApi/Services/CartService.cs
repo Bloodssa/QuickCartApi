@@ -49,7 +49,7 @@ namespace QuickCartApi.Services
 
         public async Task<ServiceResult<CartResponse>> UpdateAsync(int userId, int cartItemId, UpdateCartItemRequest request)
         {
-            var item = await cartRepository.GetByIdForUserAsync(userId, cartItemId);
+            var item = await cartRepository.GetByIdForUserAsync(cartItemId, userId);
             if (item is null)
                 return Result.Fail<CartResponse>(ErrorKind.NotFound, "Cart item not found.");
 

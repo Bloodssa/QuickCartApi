@@ -1,18 +1,23 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using QuickCartApi.Common;
 using QuickCartApi.DTOs.Auth;
 using QuickCartApi.DTOs.Users;
+using QuickCartApi.Extensions;
 using QuickCartApi.Services.Interfaces;
 using System.Security.Claims;
 
 namespace QuickCartApi.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion(1)]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     public class AuthController(IAuthService authService) : ControllerBase
     {
+        [EnableRateLimiting(RateLimitingExtension.AuthPolicy)]
         [HttpPost("register")]
         public async Task<ActionResult<UserResponse>> Register([FromBody] RegisterRequest request)
         {
@@ -24,6 +29,7 @@ namespace QuickCartApi.Controllers
             return Ok(result.Value);
         }
 
+        [EnableRateLimiting(RateLimitingExtension.AuthPolicy)]
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)
         {
@@ -35,6 +41,7 @@ namespace QuickCartApi.Controllers
             return Ok(result);
         }
 
+        [EnableRateLimiting(RateLimitingExtension.RefreshPolicy)]
         [HttpPost("refresh")]
         public async Task<ActionResult<AuthResponse>> Refrfesh()
         {
@@ -70,13 +77,6 @@ namespace QuickCartApi.Controllers
                 return NotFound(new { message = "User not found." });
 
             return Ok(user);
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpGet("admin")]
-        public IActionResult AdminOnlyEndPoint()
-        {
-            return Ok(new { message = "You are a admin" });
         }
     }
 }
