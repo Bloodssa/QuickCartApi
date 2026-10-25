@@ -7,5 +7,7 @@ namespace QuickCartApi.Repositories.Interfaces
     {
         Task<(List<Product> Items, int TotalCount)> GetAllAsync(ProductQuery pq);
         Task<bool> CategoryExistsAsync(int categoryId);
+        Task<bool> TryDecrementStockAsync(int productId, int quantity);
+        Task IncrementStockAsync(int productId, int quantity);
     }
 }

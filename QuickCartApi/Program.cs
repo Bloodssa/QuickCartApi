@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QuickCartApi.Data;
+using QuickCartApi.Extensions;
 using QuickCartApi.Options;
 using Scalar.AspNetCore;
 using System.Text;
-using QuickCartApi.Extensions;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,7 +85,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddApiVersioningSetup();
 builder.Services.AddRateLimitingSetup();
 builder.Services.AddOpenApi("v1");
-
+builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

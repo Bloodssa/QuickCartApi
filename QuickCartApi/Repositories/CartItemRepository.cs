@@ -26,5 +26,17 @@ namespace QuickCartApi.Repositories
                 .Where(ci => ci.UserId == userId)
                 .OrderBy(ci => ci.Id)
                 .ToListAsync();
+
+        public async Task<List<CartItem>> GetByIdsForUserAsync(int userId, List<int> ids) =>
+            await context.CartItems
+                .AsNoTracking()
+                .Include(ci => ci.Product)
+                .Where(ci => ci.UserId == userId && ids.Contains(ci.Id))
+                .ToListAsync();
+
+        public async Task<int> DeleteByIdsAsync(int userId, List<int> ids) =>
+            await context.CartItems
+                .Where(ci => ci.UserId == userId && ids.Contains(ci.Id))
+                .ExecuteDeleteAsync();
     }
 }

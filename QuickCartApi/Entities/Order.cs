@@ -6,7 +6,7 @@ namespace QuickCartApi.Entities
     {
         public int UserId { get; set; }
         public int AddressId { get; set; }
-        public int OrderNumber { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
         public decimal SubTotal { get; set; }
         public decimal Total { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;

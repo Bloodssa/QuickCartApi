@@ -18,6 +18,7 @@ namespace QuickCartApi.Extensions
             services.AddScoped<IProductImageRepository, ProductImageRepository>();
             services.AddScoped<ICartItemRepository, CartItemRepository>();
             services.AddScoped<IAddressRepository, AddressRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
 
             // Services
             services.AddScoped<IAuthService, AuthService>();
@@ -28,6 +29,7 @@ namespace QuickCartApi.Extensions
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IAddressRepository, AddressRepository>();
             services.AddScoped<IAddressService, AddressService>();
+            services.AddScoped<IOrderService, OrderService>();
             return services;
         }
     }

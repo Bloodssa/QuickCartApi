@@ -20,6 +20,8 @@ namespace QuickCartApi.Data.Configurations
                 .WithOne(o => o.Transaction)
                 .HasForeignKey<Transaction>(t => t.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Property(t => t.PaymentStatus).HasConversion<string>().HasMaxLength(20).IsRequired();
         }
     }
 }
