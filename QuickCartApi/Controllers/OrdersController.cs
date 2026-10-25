@@ -38,7 +38,7 @@ namespace QuickCartApi.Controllers
         public async Task<ActionResult<OrderResponse>> GetById(int id)
         {
             var result = await orderService.GetMyOrderAsync(User.GetUserId(), id);
-            return result.Success ? Ok(result) : result.ToProblem();
+            return result.Success ? Ok(result.Value) : result.ToProblem();
         }
 
         // POST api/v1/orders/42/cancel: an ACTION on the order, not a delete: the record stays
