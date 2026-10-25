@@ -8,5 +8,7 @@ namespace QuickCartApi.Repositories.Interfaces
         Task<CartItem?> GetByIdForUserAsync(int id, int userId);
         Task<CartItem?> GetByUserAndProductAsync(int userId, int productId);
         Task<int> DeleteByUserIdAsync(int userId);
+        Task<List<CartItem>> GetByIdsForUserAsync(int userId, List<int> ids);
+        Task<int> DeleteByIdsAsync(int userId, List<int> ids);
     }
 }

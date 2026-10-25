@@ -47,6 +47,20 @@ namespace QuickCartApi.Repositories
         public async Task<bool> CategoryExistsAsync(int categoryId) =>
             await context.Categories.AnyAsync(c => c.Id == categoryId);
 
+        public async Task<bool> TryDecrementStockAsync(int productId, int quantity)
+        {
+            var rows = await context.Products
+                .Where(p => p.Id == productId && p.StockQuantity >= quantity)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.StockQuantity, p => p.StockQuantity - quantity));
+
+            return rows > 0;
+        }
+
+        public async Task IncrementStockAsync(int productId, int quantity) =>
+            await context.Products
+                .Where(p => p.Id == productId)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.StockQuantity, p => p.StockQuantity + quantity));
+
         private static IOrderedQueryable<Product> ApplySort(IQueryable<Product> query, ProductSort sort)
         {
             var since = DateTime.UtcNow.AddDays(-TrendingDays);
