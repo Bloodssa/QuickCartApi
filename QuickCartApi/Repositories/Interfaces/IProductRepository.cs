@@ -9,5 +9,8 @@ namespace QuickCartApi.Repositories.Interfaces
         Task<bool> CategoryExistsAsync(int categoryId);
         Task<bool> TryDecrementStockAsync(int productId, int quantity);
         Task IncrementStockAsync(int productId, int quantity);
+        Task<int?> AdjustStockAsync(int id, int delta); // new stock, or null if nothing was updated
+        Task<bool> ExistsAsync(int id);
+        Task<StockSummaryResponse> GetStockSummaryAsync(int lowStockThreshold);
     }
 }

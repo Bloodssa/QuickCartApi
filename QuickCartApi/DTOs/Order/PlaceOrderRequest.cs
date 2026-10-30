@@ -9,7 +9,7 @@ namespace QuickCartApi.DTOs.Order
         public int AddressId { get; set; }
 
         [Required]
-        [AllowedValues("COD", "Wallet", "Card")]
+        [AllowedValues("COD", "Wallet", "Card", ErrorMessage = "Payment method must be COD, Wallet or Card.")]
         public string PaymentMethod { get; set; } = string.Empty;
 
         [Required]

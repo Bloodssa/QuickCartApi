@@ -1,4 +1,5 @@
-﻿using QuickCartApi.DTOs.Product;
+﻿using Microsoft.EntityFrameworkCore;
+using QuickCartApi.DTOs.Product;
 using QuickCartApi.Entities;
 using QuickCartApi.Repositories.Interfaces;
 using QuickCartApi.Services.Interfaces;
@@ -12,6 +13,7 @@ namespace QuickCartApi.Services
             IHttpContextAccessor httpContextAccessor
         ) : IProductService
     {
+        private const int LowStockThreshold = 10;
 
         public async Task<ProductListResponse> GetAllAsync(ProductQuery q)
         {
@@ -98,6 +100,20 @@ namespace QuickCartApi.Services
             return (true, null);
         }
 
+
+        public async Task<(bool Success, string? Error, int Stock)> AdjustStockAsync(int id, int delta)
+        {
+            if (delta == 0) return (false, "Change must not be zero.", 0);
+
+            var stock = await productRepository.AdjustStockAsync(id, delta);
+            if (stock is not null) return (true, null, stock.Value);
+
+            // Nothing updated: either the product doesn't exist or stock would go below zero
+            return await productRepository.ExistsAsync(id)
+                ? (false, "Stock cannot go below zero.", 0)
+                : (false, "Product not found.", 0);
+        }
+
         public async Task<(bool Success, string? Error)> DeleteImageAsync(int productId, int imageId)
         {
             var image = await productImageRepository.GetByIdAsync(imageId);
@@ -110,6 +126,10 @@ namespace QuickCartApi.Services
             await productImageRepository.DeleteAsync(image);
             return (true, null);
         }
+
+
+        public Task<StockSummaryResponse> GetStockSummaryAsync()
+            => productRepository.GetStockSummaryAsync(LowStockThreshold);
 
         public async Task<(bool Success, string? Error)> SetDefaultImageAsync(int productId, int imageId)
         {

@@ -30,11 +30,26 @@ namespace QuickCartApi.Services
             var username = request.Username.Trim();
             var email = request.Email.Trim();
 
-            if (await userRepository.FindUserNameExistAsync(username))
-                return Result.Fail<UserResponse>(ErrorKind.Conflict, "Username already exists.");
+            var usernameExists = await userRepository.FindUserNameExistAsync(username);
 
-            if (await userRepository.FindEmailExistAsync(email))
-                return Result.Fail<UserResponse>(ErrorKind.Conflict, "Email already exists.");
+            var emailExists = await userRepository.FindEmailExistAsync(email);
+
+            if (usernameExists || emailExists)
+            {
+                var errors = new Dictionary<string, string[]>();
+
+                if (usernameExists)
+                    errors["username"] = ["Username already exists."];
+
+                if (emailExists)
+                    errors["email"] = ["Email already exists."];
+
+                return Result.Fail<UserResponse>(
+                    ErrorKind.Conflict,
+                    "Registration failed.",
+                    errors
+                );
+            }
 
             User user = new()
             {

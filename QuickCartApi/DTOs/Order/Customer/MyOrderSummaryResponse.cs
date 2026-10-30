@@ -1,0 +1,13 @@
+﻿using QuickCartApi.DTOs.Order.Customer;
+
+public class MyOrderSummaryResponse
+{
+    public int Id { get; set; }
+    public string OrderNumber { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string PaymentStatus { get; set; } = string.Empty;
+    public decimal Total { get; set; }
+    public int ItemCount { get; set; }
+    public List<MyOrderItemResponse> Items { get; set; } = [];
+    public DateTime OrderDate { get; set; }
+}

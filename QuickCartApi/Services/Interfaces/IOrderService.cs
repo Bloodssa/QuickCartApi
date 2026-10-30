@@ -7,7 +7,7 @@ namespace QuickCartApi.Services.Interfaces
     {
         // customer service
         Task<ServiceResult<OrderResponse>> PlaceOrderAsync(int userId, PlaceOrderRequest request);
-        Task<OrderListResponse> GetMyOrdersAsync(int userId, OrderQuery query);
+        Task<MyOrderListResponse> GetMyOrdersAsync(int userId, OrderQuery query);
         Task<ServiceResult<OrderResponse>> GetMyOrderAsync(int userId, int orderId);
         Task<ServiceResult<OrderResponse>> CancelMyOrderAsync(int userId, int orderId);
 

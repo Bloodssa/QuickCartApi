@@ -12,5 +12,7 @@ namespace QuickCartApi.Services.Interfaces
 
         Task<(bool Success, string? Error)> DeleteImageAsync(int productId, int imageId);
         Task<(bool Success, string? Error)> SetDefaultImageAsync(int productId, int imageId);
+        Task<(bool Success, string? Error, int Stock)> AdjustStockAsync(int id, int delta);
+        Task<StockSummaryResponse> GetStockSummaryAsync();
     }
 }

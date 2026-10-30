@@ -3,6 +3,7 @@ using QuickCartApi.Common;
 using QuickCartApi.Data;
 using QuickCartApi.DTOs.Address;
 using QuickCartApi.DTOs.Order;
+using QuickCartApi.DTOs.Order.Customer;
 using QuickCartApi.Entities;
 using QuickCartApi.Enums;
 using QuickCartApi.Repositories.Interfaces;
@@ -92,11 +93,11 @@ namespace QuickCartApi.Services
             return Result.Ok(ToResponse(created!));
         }
 
-        public async Task<OrderListResponse> GetMyOrdersAsync(int userId, OrderQuery query)
+        public async Task<MyOrderListResponse> GetMyOrdersAsync(int userId, OrderQuery query)
         {
             Normalize(query);
             var (items, total) = await orderRepository.GetByUserIdAsync(userId, query);
-            return ToListResponse(items, total, query);
+            return ToMyListResponse(items, total, query);
         }
 
         public async Task<ServiceResult<OrderResponse>> GetMyOrderAsync(int userId, int orderId)
@@ -313,6 +314,38 @@ namespace QuickCartApi.Services
                 TransactionDate = order.Transaction.TransactionDate
             }
         };
+
+        private MyOrderListResponse ToMyListResponse(List<Order> items, int total, OrderQuery query) => new()
+        {
+            Orders = items.Select(ToMySummary).ToList(),
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalResults = total
+        };
+
+        private MyOrderSummaryResponse ToMySummary(Order order) => new()
+        {
+            Id = order.Id,
+            OrderNumber = order.OrderNumber,
+            Status = order.Status.ToString(),
+            PaymentStatus = order.Transaction?.PaymentStatus.ToString() ?? string.Empty,
+            Total = order.Total,
+            ItemCount = order.Items.Sum(i => i.Quantity),
+            Items = order.Items.Select(i => new MyOrderItemResponse
+            {
+                ProductId = i.ProductId,
+                ProductName = i.Product.Name,
+                ImageUrl = GetProductImageUrl(i.Product),
+                Quantity = i.Quantity
+            }).ToList(),
+            OrderDate = order.OrderDate
+        };
+
+        private string? GetProductImageUrl(Product product) =>
+            GetFullImageUrl(product.Images
+                .OrderByDescending(img => img.IsDefault)
+                .Select(img => img.ImageUrl)
+                .FirstOrDefault());
 
         // todo: refactor and clean up
         private string? GetFullImageUrl(string? url)

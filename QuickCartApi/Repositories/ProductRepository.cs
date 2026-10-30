@@ -56,6 +56,41 @@ namespace QuickCartApi.Repositories
             return rows > 0;
         }
 
+        public async Task<int?> AdjustStockAsync(int id, int delta)
+        {
+            // One atomic UPDATE: the WHERE clause refuses to push stock below zero
+            var rows = await context.Products
+                .Where(p => p.Id == id && p.StockQuantity + delta >= 0)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.StockQuantity, p => p.StockQuantity + delta));
+
+            if (rows == 0) return null;
+
+            return await context.Products
+                .Where(p => p.Id == id)
+                .Select(p => p.StockQuantity)
+                .SingleAsync();
+        }
+
+        public async Task<StockSummaryResponse> GetStockSummaryAsync(int lowStockThreshold)
+        {
+            var summary = await context.Products
+                .GroupBy(_ => 1)
+                .Select(g => new StockSummaryResponse
+                {
+                    TotalUnits = g.Sum(p => p.StockQuantity),
+                    LowCount = g.Count(p => p.StockQuantity > 0 && p.StockQuantity <= lowStockThreshold),
+                    OutCount = g.Count(p => p.StockQuantity <= 0)
+                })
+                .FirstOrDefaultAsync();
+
+            // No products yet: GroupBy returns no rows
+            summary ??= new StockSummaryResponse();
+            summary.LowStockThreshold = lowStockThreshold;
+            return summary;
+        }
+
+        public Task<bool> ExistsAsync(int id) => context.Products.AnyAsync(p => p.Id == id);
+
         public async Task IncrementStockAsync(int productId, int quantity) =>
             await context.Products
                 .Where(p => p.Id == productId)

@@ -5,6 +5,7 @@
     {
         public ErrorKind Kind { get; init; }
         public string? Error { get; init; }
+        public Dictionary<string, string[]>? Errors { get; init; }
         public bool Success => Kind == ErrorKind.None; // default error false
     }
 

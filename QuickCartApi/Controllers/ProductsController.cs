@@ -90,5 +90,22 @@ namespace QuickCartApi.Controllers
             var (success, error) = await productService.SetDefaultImageAsync(id, imageId);
             return success ? NoContent() : NotFound(new { message = error });
         }
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("{id:int}/stock")]
+        [EnableRateLimiting(RateLimitingExtension.WritePolicy)]
+        public async Task<IActionResult> AdjustStock(int id, [FromBody] AdjustStockRequest request)
+        {
+            var (success, error, stock) = await productService.AdjustStockAsync(id, request.Delta);
+
+            if (!success)
+                return error == "Product not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
+
+            return Ok(new { id, stockQuantity = stock });
+        }
+
+        [Authorize(Roles = "Admin")]    
+        [HttpGet("stock-summary")]
+        public async Task<ActionResult<StockSummaryResponse>> GetStockSummary()
+            => Ok(await productService.GetStockSummaryAsync());
     }
 }
