@@ -1,0 +1,53 @@
+name: Build & Deploy QuickCart API
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  AZURE_WEBAPP_NAME: api-qc
+  PROJECT_PATH: QuickCartApi/QuickCartApi.csproj
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore QuickCart.slnx
+
+      - name: Build
+        run: dotnet build QuickCart.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test QuickCart.slnx -c Release --no-build
+
+      - name: Publish
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --no-build -o ./publish
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-package
+          path: ./publish
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: api-package
+          path: ./publish
+
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish

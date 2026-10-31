@@ -87,12 +87,6 @@ builder.Services.AddRateLimitingSetup();
 builder.Services.AddOpenApi("v1");
 builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 var app = builder.Build();
-app.UseExceptionHandler(errorApp => errorApp.Run(async ctx =>
-{
-    var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
-    ctx.Response.StatusCode = 500;
-    await ctx.Response.WriteAsJsonAsync(new { message = ex?.Message, inner = ex?.InnerException?.Message });
-}));
 
 // Configure the HTTP request pipeline.
 app.MapOpenApi();
