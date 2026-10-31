@@ -18,13 +18,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options => 
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null
-            )
-        ));
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // CORS
 builder.Services.AddCors(options =>
