@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using QuickCartApi.Common;
 using QuickCartApi.Data;
 using QuickCartApi.DTOs.Admin.Dashboard;
+using QuickCartApi.DTOs.Admin.Reports;
 using QuickCartApi.Entities;
 using QuickCartApi.Enums;
 using QuickCartApi.Repositories.Interfaces;
-using System.Collections;
 
 namespace QuickCartApi.Repositories
 {
@@ -49,6 +50,93 @@ namespace QuickCartApi.Repositories
                 TopProducts = await GetTopProductsAsync(rangeStartUtc),
                 NeedsAction = await GetNeedsActionAsync()
             };
+        }
+
+        private IQueryable<Order> InRange(ReportRange r) =>
+        context.Orders.AsNoTracking().Where(o => o.OrderDate >= r.FromUtc && o.OrderDate < r.ToUtcExclusive);
+
+        // Same "paid" rule as the dashboard: change it in one place if your revenue definition changes
+        private static IQueryable<Order> Paid(IQueryable<Order> q) =>
+            q.Where(o => o.Transaction != null && o.Transaction.PaymentStatus == PaymentStatus.Paid);
+
+        public async Task<SalesReportSummary> GetSummaryAsync(ReportRange range)
+        {
+            var all = InRange(range);
+
+            var totalOrders = await all.CountAsync();
+            var cancelled = await all.CountAsync(o => o.Status == OrderStatus.Cancelled);
+
+            var paid = await Paid(all)
+                .GroupBy(_ => 1)
+                .Select(g => new { Count = g.Count(), Revenue = g.Sum(o => o.Total) })
+                .FirstOrDefaultAsync(); // null when nothing was paid in the range
+
+            var paidCount = paid?.Count ?? 0;
+            var revenue = paid?.Revenue ?? 0m;
+
+            return new SalesReportSummary
+            {
+                TotalOrders = totalOrders,
+                CancelledOrders = cancelled,
+                PaidOrders = paidCount,
+                PaidRevenue = revenue,
+                AverageOrderValue = paidCount > 0 ? Math.Round(revenue / paidCount, 2) : 0
+            };
+        }
+
+        public async Task<List<RevenueDay>> GetRevenueByDayAsync(ReportRange range)
+        {
+            // Group by the Manila calendar day, not the UTC day
+            var rows = await Paid(InRange(range))
+                .GroupBy(o => o.OrderDate.AddHours(8).Date)
+                .Select(g => new { Day = g.Key, Revenue = g.Sum(o => o.Total) })
+                .ToListAsync();
+
+            var byDay = rows.ToDictionary(r => DateOnly.FromDateTime(r.Day), r => r.Revenue);
+
+            // Fill days with no sales so the chart has one bar per day
+            return Enumerable.Range(0, range.Days)
+                .Select(i => range.From.AddDays(i))
+                .Select(d => new RevenueDay { Date = d, Revenue = byDay.GetValueOrDefault(d) })
+                .ToList();
+        }
+
+        public Task<List<TopProduct>> GetTopProductsAsync(ReportRange range, int take) =>
+            context.OrderItems
+                .AsNoTracking()
+                .Where(i => i.Order.OrderDate >= range.FromUtc
+                         && i.Order.OrderDate < range.ToUtcExclusive
+                         && i.Order.Status != OrderStatus.Cancelled)
+                .GroupBy(i => new { i.ProductId, i.Product.Name })
+                .Select(g => new TopProduct { ProductId = g.Key.ProductId, Name = g.Key.Name, Quantity = g.Sum(i => i.Quantity) })
+                .OrderByDescending(p => p.Quantity)
+                .Take(take)
+                .ToListAsync();
+
+        public async Task<(List<SalesTransactionRow> Rows, int Total)> GetTransactionsAsync(ReportRange range, int skip, int take)
+        {
+            var query = InRange(range).OrderByDescending(o => o.OrderDate);
+
+            var total = await query.CountAsync();
+
+            var rows = await query
+                .Skip(skip)
+                .Take(take)
+                .Select(o => new SalesTransactionRow
+                {
+                    Date = o.OrderDate,
+                    OrderNumber = o.OrderNumber,
+                    CustomerName = o.User.Username,
+                    PaymentMethod = o.Transaction != null ? o.Transaction.PaymentMethod.ToString() : "",
+                    PaymentStatus = o.Transaction != null ? o.Transaction.PaymentStatus.ToString() : "",
+                    Total = o.Total
+                })
+                .ToListAsync();
+
+            // SQL returns no timezone marker; mark UTC so the JSON ends with "Z"
+            foreach (var r in rows) r.Date = DateTime.SpecifyKind(r.Date, DateTimeKind.Utc);
+
+            return (rows, total);
         }
 
         // return tuple by counting the orders statuses

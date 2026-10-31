@@ -87,6 +87,8 @@ builder.Services.AddApiVersioningSetup();
 builder.Services.AddRateLimitingSetup();
 builder.Services.AddOpenApi("v1");
 builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
